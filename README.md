@@ -34,6 +34,14 @@ Esta aplicación tiene el propósito de crear un sistema de gestión de bibliote
 $ npm install
 ```
 
+## Creacion de la tabla base de datos: 
+Reemplaza postgres por el usuario de tu base de datos, posterior a la ejecucion del comando ingresa tu contraseña de la base de datos.
+```bash
+psql -U postgres
+
+```
+
+
 ## Compile and run the project
 
 ```bash
