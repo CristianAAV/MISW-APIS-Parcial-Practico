@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Param, Body, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Put, Delete, HttpCode } from '@nestjs/common';
 import { LibroService } from './libro.service';
 import { Libro } from './libro.entity';
+import { CreateLibroDto } from './dto/create-libro.dto';
+import { UpdateLibroDto } from './dto/update-libro.dto';
 
 @Controller('books')
 export class LibroController {
@@ -17,16 +19,17 @@ export class LibroController {
   }
 
   @Post()
-  create(@Body() libro: Libro) {
-    return this.libroService.create(libro);
+  create(@Body() dto: CreateLibroDto) {
+    return this.libroService.create(dto);
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() libro: Libro) {
-    return this.libroService.update(id, libro);
+  update(@Param('id') id: number, @Body() dto: UpdateLibroDto) {
+    return this.libroService.update(id, dto);
   }
 
   @Delete(':id')
+  @HttpCode(204) 
   delete(@Param('id') id: number) {
     return this.libroService.delete(id);
   }

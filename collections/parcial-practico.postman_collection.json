@@ -1,0 +1,2141 @@
+{
+	"info": {
+		"_postman_id": "f56e5142-5758-4698-b7ea-54309680a31d",
+		"name": "Parcial Práctico - MISW4403",
+		"description": "Colección para probar Bibliotecas, Libros y la Asociación",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "38826606"
+	},
+	"item": [
+		{
+			"name": "Bibliotecas",
+			"item": [
+				{
+					"name": "Crear biblioteca válida",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 201 Created\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response has expected fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"id\");\r",
+									"    pm.expect(jsonData).to.have.property(\"nombre\", \"Central\");\r",
+									"    pm.expect(jsonData).to.have.property(\"direccion\", \"Calle 123\");\r",
+									"    pm.expect(jsonData).to.have.property(\"ciudad\", \"Bogotá\");\r",
+									"    pm.expect(jsonData).to.have.property(\"horaApertura\", \"08:00\");\r",
+									"    pm.expect(jsonData).to.have.property(\"horaCierre\", \"17:00\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.environment.set(\"libraryId\", pm.response.json().id);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Central\",\n  \"direccion\": \"Calle 123\",\n  \"ciudad\": \"Bogot\\u00e1\",\n  \"horaApertura\": \"08:00\",\n  \"horaCierre\": \"17:00\"\n}"
+						},
+						"url": "localhost:3000/libraries"
+					},
+					"response": []
+				},
+				{
+					"name": "Crear biblioteca inválida (hora apertura > cierre)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 Bad Request\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Hora de apertura debe ser menor que la de cierre\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Bad Request\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 400);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"ErrorLib\",\n  \"direccion\": \"Calle 456\",\n  \"ciudad\": \"Medell\\u00edn\",\n  \"horaApertura\": \"18:00\",\n  \"horaCierre\": \"09:00\"\n}"
+						},
+						"url": "localhost:3000/libraries"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener todas las bibliotecas",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"libraryId\", json.id); // Guardamos el ID\r",
+									"        console.log(\"Library created with ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creating library:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 200 Ok\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Última biblioteca tiene los datos esperados\", function () {\r",
+									"    const libraries = pm.response.json();\r",
+									"    pm.expect(libraries).to.be.an(\"array\").that.is.not.empty;\r",
+									"\r",
+									"    const last = libraries[libraries.length - 1];\r",
+									"    pm.expect(last).to.have.property(\"nombre\", \"Central\");\r",
+									"    pm.expect(last).to.have.property(\"direccion\", \"Calle 123\");\r",
+									"    pm.expect(last).to.have.property(\"ciudad\", \"Bogotá\");\r",
+									"    pm.expect(last).to.have.property(\"horaApertura\", \"08:00\");\r",
+									"    pm.expect(last).to.have.property(\"horaCierre\", \"17:00\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener biblioteca por ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 200 OK\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response has expected fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"id\");\r",
+									"    pm.expect(jsonData).to.have.property(\"nombre\", \"Central\");\r",
+									"    pm.expect(jsonData).to.have.property(\"direccion\", \"Calle 123\");\r",
+									"    pm.expect(jsonData).to.have.property(\"ciudad\", \"Bogotá\");\r",
+									"    pm.expect(jsonData).to.have.property(\"horaApertura\", \"08:00\");\r",
+									"    pm.expect(jsonData).to.have.property(\"horaCierre\", \"17:00\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.environment.set(\"libraryId\", pm.response.json().id);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"libraryId\", json.id);\r",
+									"        console.log(\"Library created with ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creating library:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener biblioteca por ID inexistente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Biblioteca con id 999999 no encontrada\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/999999"
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar biblioteca válida",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"07:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"libraryId\", json.id);\r",
+									"        console.log(\"Library created with ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creating library:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Última biblioteca tiene los datos esperados\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"nombre\", \"Central Actualizada\");\r",
+									"    pm.expect(jsonData).to.have.property(\"direccion\", \"Calle 321\");\r",
+									"    pm.expect(jsonData).to.have.property(\"ciudad\", \"Cali\");\r",
+									"    pm.expect(jsonData).to.have.property(\"horaApertura\", \"08:00\");\r",
+									"    pm.expect(jsonData).to.have.property(\"horaCierre\", \"18:00\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Central Actualizada\",\n  \"direccion\": \"Calle 321\",\n  \"ciudad\": \"Cali\",\n  \"horaApertura\": \"08:00\",\n  \"horaCierre\": \"18:00\"\n}"
+						},
+						"url": "localhost:3000/libraries/{{libraryId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar biblioteca inexistente",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"07:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"libraryId\", json.id);\r",
+									"        console.log(\"Library created with ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creating library:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"No encontrada\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nombre\": \"Central Actualizada\",\n  \"direccion\": \"Calle 321\",\n  \"ciudad\": \"Cali\",\n  \"horaApertura\": \"08:00\",\n  \"horaCierre\": \"18:00\"\n}"
+						},
+						"url": "localhost:3000/libraries/999999"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar biblioteca",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"07:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"libraryId\", json.id);\r",
+									"        console.log(\"Library created with ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creating library:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 No Content\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar biblioteca inexistente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Biblioteca con id 999999 no encontrada\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/999999"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Libros",
+			"item": [
+				{
+					"name": "Crear libro válido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 201 Created\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response has expected fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"id\");\r",
+									"    pm.expect(jsonData).to.have.property(\"titulo\", \"Cien años de soledad\");\r",
+									"    pm.expect(jsonData).to.have.property(\"autor\", \"Gabriel García Márquez\");\r",
+									"    pm.expect(jsonData).to.have.property(\"fechaPublicacion\", \"2025-02-08\");\r",
+									"    pm.expect(jsonData).to.have.property(\"isbn\", \"1234567890\");\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"Cien a\\u00f1os de soledad\",\n  \"autor\": \"Gabriel Garc\\u00eda M\\u00e1rquez\",\n  \"fechaPublicacion\": \"2025-02-08\",\n  \"isbn\": \"1234567890\"\n}"
+						},
+						"url": "localhost:3000/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Crear libro con fecha futura",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 Bad Request\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Fecha de publicación no puede ser futura\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Bad Request\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 400);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"Libro Futuro\",\n  \"autor\": \"Futuro Autor\",\n  \"fechaPublicacion\": \"2025-05-29\",\n  \"isbn\": \"9876543210\"\n}"
+						},
+						"url": "localhost:3000/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener todos los libros",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/books',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"bookId\", json.id);\r",
+									"        console.log(\"Libro creado con ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creando el libro:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 200 Ok\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Última biblioteca tiene los datos esperados\", function () {\r",
+									"    const libraries = pm.response.json();\r",
+									"    pm.expect(libraries).to.be.an(\"array\").that.is.not.empty;\r",
+									"\r",
+									"    const last = libraries[libraries.length - 1];\r",
+									"    pm.expect(last).to.have.property(\"titulo\", \"Cien años de soledad\");\r",
+									"    pm.expect(last).to.have.property(\"autor\", \"Gabriel García Márquez\");\r",
+									"    pm.expect(last).to.have.property(\"fechaPublicacion\", \"2025-02-08\");\r",
+									"    pm.expect(last).to.have.property(\"isbn\", \"1234567890\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener libro por ID",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/books',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"bookId\", json.id);\r",
+									"        console.log(\"Libro creado con ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creando el libro:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 200 Ok\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Última biblioteca tiene los datos esperados\", function () {\r",
+									"\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"titulo\", \"Cien años de soledad\");\r",
+									"    pm.expect(jsonData).to.have.property(\"autor\", \"Gabriel García Márquez\");\r",
+									"    pm.expect(jsonData).to.have.property(\"fechaPublicacion\", \"2025-02-08\");\r",
+									"    pm.expect(jsonData).to.have.property(\"isbn\", \"1234567890\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/books/{{bookId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener libro por ID inexistente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Libro con id 999999 no encontrado\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/books/999999"
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar libro válido",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/books',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"bookId\", json.id);\r",
+									"        console.log(\"Libro creado con ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creando el libro:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 200 Ok\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Última biblioteca tiene los datos esperados\", function () {\r",
+									"    const libraries = pm.response.json();\r",
+									"    pm.expect(libraries).to.have.property(\"titulo\", \"La tercera ola\");\r",
+									"    pm.expect(libraries).to.have.property(\"autor\", \"Alvin Toffler\");\r",
+									"    pm.expect(libraries).to.have.property(\"fechaPublicacion\", \"2025-02-18\");\r",
+									"    pm.expect(libraries).to.have.property(\"isbn\", \"987654321\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"La tercera ola\",\n  \"autor\": \"Alvin Toffler\",\n  \"fechaPublicacion\": \"2025-02-18\",\n  \"isbn\": \"987654321\"\n}"
+						},
+						"url": "localhost:3000/books/{{bookId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar libro Inexistente",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/books',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"bookId\", json.id);\r",
+									"        console.log(\"Libro creado con ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creando el libro:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"No encontrado\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"La tercera ola\",\n  \"autor\": \"Alvin Toffler\",\n  \"fechaPublicacion\": \"2025-02-18\",\n  \"isbn\": \"987654321\"\n}"
+						},
+						"url": "localhost:3000/books/99999"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar libro",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const payload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/books',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(payload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const json = res.json();\r",
+									"        pm.environment.set(\"bookId\", json.id);\r",
+									"        console.log(\"Libro creado con ID:\", json.id);\r",
+									"    } else {\r",
+									"        console.error(\"Error creando el libro:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 No Content\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/books/{{bookId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar libro inexistente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Libro con id 999999 no encontrado\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/books/999999"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Biblioteca-Libros",
+			"item": [
+				{
+					"name": "Asociar libro a biblioteca",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Primero crear la biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        pm.environment.set(\"libraryId\", biblioteca.id);\r",
+									"        console.log(\"Biblioteca creada con ID:\", biblioteca.id);\r",
+									"\r",
+									"        // Después crear el libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: {\r",
+									"                'Content-Type': 'application/json'\r",
+									"            },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                pm.environment.set(\"bookId\", libro.id);\r",
+									"                console.log(\"Libro creado con ID:\", libro.id);\r",
+									"            } else {\r",
+									"                console.error(\"Error creando el libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"Error creando la biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response has expected fields\", function () {\r",
+									"    const json = pm.response.json();\r",
+									"\r",
+									"    pm.expect(json).to.have.property(\"id\");\r",
+									"    pm.expect(json.nombre).to.eql(\"Central\");\r",
+									"    pm.expect(json.direccion).to.eql(\"Calle 123\");\r",
+									"    pm.expect(json.ciudad).to.eql(\"Bogotá\");\r",
+									"    pm.expect(json.horaApertura).to.eql(\"08:00\");\r",
+									"    pm.expect(json.horaCierre).to.eql(\"17:00\");\r",
+									"\r",
+									"    // Validación del array de libros\r",
+									"    pm.expect(json.libros).to.be.an(\"array\").that.is.not.empty;\r",
+									"    const libro = json.libros[0];\r",
+									"\r",
+									"    pm.expect(libro).to.have.property(\"id\");\r",
+									"    pm.expect(libro.titulo).to.eql(\"Cien años de soledad\");\r",
+									"    pm.expect(libro.autor).to.eql(\"Gabriel García Márquez\");\r",
+									"    pm.expect(libro.fechaPublicacion).to.eql(\"2025-02-08\");\r",
+									"    pm.expect(libro.isbn).to.eql(\"1234567890\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}/books/{{bookId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Asociar libro inexistente",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Primero crear la biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: {\r",
+									"        'Content-Type': 'application/json'\r",
+									"    },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        pm.environment.set(\"libraryId\", biblioteca.id);\r",
+									"        console.log(\"Biblioteca creada con ID:\", biblioteca.id);\r",
+									"\r",
+									"        // Después crear el libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: {\r",
+									"                'Content-Type': 'application/json'\r",
+									"            },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                pm.environment.set(\"bookId\", libro.id);\r",
+									"                console.log(\"Libro creado con ID:\", libro.id);\r",
+									"            } else {\r",
+									"                console.error(\"Error creando el libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"Error creando la biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Biblioteca o libro no encontrado\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}/books/999999"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener libros de biblioteca",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        const libraryId = biblioteca.id;\r",
+									"        pm.environment.set(\"libraryId\", libraryId);\r",
+									"\r",
+									"        // Paso 2: Crear libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                const bookId = libro.id;\r",
+									"                pm.environment.set(\"bookId\", bookId);\r",
+									"\r",
+									"                // Paso 3: Asociar libro a biblioteca\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${libraryId}/books/${bookId}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && res3.code === 201) {\r",
+									"                        console.log(\"Libro asociado a biblioteca exitosamente\");\r",
+									"                    } else {\r",
+									"                        console.error(\"Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"\r",
+									"            } else {\r",
+									"                console.error(\"Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 200 Ok\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Biblioteca tiene los libros esperados\", function () {\r",
+									"    const libraries = pm.response.json();\r",
+									"    pm.expect(libraries).to.be.an(\"array\").that.is.not.empty;\r",
+									"\r",
+									"    const last = libraries[libraries.length - 1];\r",
+									"    pm.expect(last).to.have.property(\"titulo\", \"Cien años de soledad\");\r",
+									"    pm.expect(last).to.have.property(\"autor\", \"Gabriel García Márquez\");\r",
+									"    pm.expect(last).to.have.property(\"fechaPublicacion\", \"2025-02-08\");\r",
+									"    pm.expect(last).to.have.property(\"isbn\", \"1234567890\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener libro no asociado",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        const libraryId = biblioteca.id;\r",
+									"        pm.environment.set(\"libraryId\", libraryId);\r",
+									"\r",
+									"        // Paso 2: Crear libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                const bookId = libro.id;\r",
+									"                pm.environment.set(\"bookId\", bookId);\r",
+									"\r",
+									"                // Paso 3: Asociar libro a biblioteca\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${libraryId}/books/${bookId}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && res3.code === 201) {\r",
+									"                        console.log(\"Libro asociado a biblioteca exitosamente\");\r",
+									"                    } else {\r",
+									"                        console.error(\"Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"\r",
+									"            } else {\r",
+									"                console.error(\"Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Libro no asociado a esta biblioteca\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}/books/999999"
+					},
+					"response": []
+				},
+				{
+					"name": "Obtener libros de biblioteca inexistente",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        const libraryId = biblioteca.id;\r",
+									"        pm.environment.set(\"libraryId\", libraryId);\r",
+									"\r",
+									"        // Paso 2: Crear libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                const bookId = libro.id;\r",
+									"                pm.environment.set(\"bookId\", bookId);\r",
+									"\r",
+									"                // Paso 3: Asociar libro a biblioteca\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${libraryId}/books/${bookId}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && res3.code === 201) {\r",
+									"                        console.log(\"Libro asociado a biblioteca exitosamente\");\r",
+									"                    } else {\r",
+									"                        console.error(\"Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"\r",
+									"            } else {\r",
+									"                console.error(\"Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Biblioteca no encontrada\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/999999/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar libros en biblioteca",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        const libraryId = biblioteca.id;\r",
+									"        pm.environment.set(\"libraryId\", libraryId);\r",
+									"\r",
+									"        // Paso 2: Crear libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                const bookId = libro.id;\r",
+									"                pm.environment.set(\"bookId\", bookId);\r",
+									"\r",
+									"                // Paso 3: Asociar libro a biblioteca\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${libraryId}/books/${bookId}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && res3.code === 201 || res3.code === 200) {\r",
+									"                        console.log(\"✅ Libro asociado exitosamente\");\r",
+									"                    } else {\r",
+									"                        console.error(\"❌ Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"\r",
+									"            } else {\r",
+									"                console.error(\"❌ Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"❌ Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Código de estado es 200 OK\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Respuesta contiene la lista actualizada de libros\", function () {\r",
+									"    const json = pm.response.json();\r",
+									"    pm.expect(json).to.have.property(\"libros\");\r",
+									"    pm.expect(json.libros).to.be.an(\"array\").that.is.not.empty;\r",
+									"    pm.expect(json.libros.some(l => l.id === +pm.environment.get(\"bookId\"))).to.be.true;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {{bookId}}\n]"
+						},
+						"url": "localhost:3000/libraries/{{libraryId}}/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Actualizar con libro inexistente",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        const libraryId = biblioteca.id;\r",
+									"        pm.environment.set(\"libraryId\", libraryId);\r",
+									"\r",
+									"        // Paso 2: Crear libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                const bookId = libro.id;\r",
+									"                pm.environment.set(\"bookId\", bookId);\r",
+									"\r",
+									"                // Paso 3: Asociar libro a biblioteca\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${libraryId}/books/${bookId}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && res3.code === 201 || res3.code === 200) {\r",
+									"                        console.log(\"✅ Libro asociado exitosamente\");\r",
+									"                    } else {\r",
+									"                        console.error(\"❌ Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"\r",
+									"            } else {\r",
+									"                console.error(\"❌ Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"❌ Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"Libros no encontrados: 999999\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  999999\n]"
+						},
+						"url": "localhost:3000/libraries/{{libraryId}}/books"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar libro asociado",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Definición de los datos\r",
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear una biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        pm.environment.set(\"libraryId\", biblioteca.id);\r",
+									"        console.log(\"Biblioteca creada con ID:\", biblioteca.id);\r",
+									"\r",
+									"        // Paso 2: Crear un libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                pm.environment.set(\"bookId\", libro.id);\r",
+									"                console.log(\"Libro creado con ID:\", libro.id);\r",
+									"\r",
+									"                // Paso 3: Asociar el libro a la biblioteca\r",
+									"                // CORRECCIÓN: La URL debe tener el formato correcto según tu controlador\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${biblioteca.id}/books/${libro.id}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && (res3.code === 200 || res3.code === 201)) {\r",
+									"                        console.log(\"Libro asociado correctamente a la biblioteca\");\r",
+									"                        \r",
+									"                        // Para verificar que la asociación fue exitosa\r",
+									"                        pm.sendRequest({\r",
+									"                            url: `http://localhost:3000/libraries/${biblioteca.id}/books`,\r",
+									"                            method: 'GET',\r",
+									"                            header: { 'Content-Type': 'application/json' }\r",
+									"                        }, function (err4, res4) {\r",
+									"                            if (!err4) {\r",
+									"                                console.log(\"Libros en la biblioteca:\", res4.json());\r",
+									"                            }\r",
+									"                        });\r",
+									"                    } else {\r",
+									"                        console.error(\"Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"            } else {\r",
+									"                console.error(\"Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"    } else {\r",
+									"        console.error(\"Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 No Content\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}/books/{{bookId}}"
+					},
+					"response": []
+				},
+				{
+					"name": "Eliminar libro no asociado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 Not Found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response contains error fields\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property(\"message\", \"El libro con ID 999999 no está asociado a esta biblioteca\");\r",
+									"    pm.expect(jsonData).to.have.property(\"error\", \"Not Found\");\r",
+									"    pm.expect(jsonData).to.have.property(\"statusCode\", 404);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const bibliotecaPayload = {\r",
+									"    nombre: \"Central\",\r",
+									"    direccion: \"Calle 123\",\r",
+									"    ciudad: \"Bogotá\",\r",
+									"    horaApertura: \"08:00\",\r",
+									"    horaCierre: \"17:00\"\r",
+									"};\r",
+									"\r",
+									"const libroPayload = {\r",
+									"    titulo: \"Cien años de soledad\",\r",
+									"    autor: \"Gabriel García Márquez\",\r",
+									"    fechaPublicacion: \"2025-02-08\",\r",
+									"    isbn: \"1234567890\"\r",
+									"};\r",
+									"\r",
+									"// Paso 1: Crear biblioteca\r",
+									"pm.sendRequest({\r",
+									"    url: 'http://localhost:3000/libraries',\r",
+									"    method: 'POST',\r",
+									"    header: { 'Content-Type': 'application/json' },\r",
+									"    body: {\r",
+									"        mode: 'raw',\r",
+									"        raw: JSON.stringify(bibliotecaPayload)\r",
+									"    }\r",
+									"}, function (err, res) {\r",
+									"    if (!err && res.code === 201) {\r",
+									"        const biblioteca = res.json();\r",
+									"        const libraryId = biblioteca.id;\r",
+									"        pm.environment.set(\"libraryId\", libraryId);\r",
+									"\r",
+									"        // Paso 2: Crear libro\r",
+									"        pm.sendRequest({\r",
+									"            url: 'http://localhost:3000/books',\r",
+									"            method: 'POST',\r",
+									"            header: { 'Content-Type': 'application/json' },\r",
+									"            body: {\r",
+									"                mode: 'raw',\r",
+									"                raw: JSON.stringify(libroPayload)\r",
+									"            }\r",
+									"        }, function (err2, res2) {\r",
+									"            if (!err2 && res2.code === 201) {\r",
+									"                const libro = res2.json();\r",
+									"                const bookId = libro.id;\r",
+									"                pm.environment.set(\"bookId\", bookId);\r",
+									"\r",
+									"                // Paso 3: Asociar libro a biblioteca\r",
+									"                pm.sendRequest({\r",
+									"                    url: `http://localhost:3000/libraries/${libraryId}/books/${bookId}`,\r",
+									"                    method: 'POST',\r",
+									"                    header: { 'Content-Type': 'application/json' }\r",
+									"                }, function (err3, res3) {\r",
+									"                    if (!err3 && res3.code === 201 || res3.code === 200) {\r",
+									"                        console.log(\"✅ Libro asociado exitosamente\");\r",
+									"                    } else {\r",
+									"                        console.error(\"❌ Error asociando libro:\", err3 || res3.text());\r",
+									"                    }\r",
+									"                });\r",
+									"\r",
+									"            } else {\r",
+									"                console.error(\"❌ Error creando libro:\", err2 || res2.text());\r",
+									"            }\r",
+									"        });\r",
+									"\r",
+									"    } else {\r",
+									"        console.error(\"❌ Error creando biblioteca:\", err || res.text());\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "localhost:3000/libraries/{{libraryId}}/books/999999"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

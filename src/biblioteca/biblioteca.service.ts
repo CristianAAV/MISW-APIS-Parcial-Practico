@@ -2,7 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Biblioteca } from './biblioteca.entity';
-
+import { CreateBibliotecaDto } from './dto/create-biblioteca.dto';
+import { UpdateBibliotecaDto } from './dto/update-biblioteca.dto';
 @Injectable()
 export class BibliotecaService {
   constructor(
@@ -20,20 +21,20 @@ export class BibliotecaService {
     return biblioteca;
   }
 
-  async create(biblioteca: Biblioteca): Promise<Biblioteca> {
-    if (biblioteca.horaApertura >= biblioteca.horaCierre) {
-      throw new BadRequestException('La hora de apertura debe ser menor que la hora de cierre');
+  async create(dto: CreateBibliotecaDto) {
+    if (dto.horaApertura >= dto.horaCierre) {
+      throw new BadRequestException('Hora de apertura debe ser menor que la de cierre');
     }
-    return this.bibliotecaRepo.save(biblioteca);
+    return this.bibliotecaRepo.save(dto);
   }
 
-  async update(id: number, biblioteca: Biblioteca): Promise<Biblioteca> {
+  async update(id: number, dto: UpdateBibliotecaDto) {
     const existente = await this.bibliotecaRepo.findOneBy({ id });
-    if (!existente) throw new NotFoundException(`Biblioteca con id ${id} no encontrada`);
-    if (biblioteca.horaApertura >= biblioteca.horaCierre) {
-      throw new BadRequestException('La hora de apertura debe ser menor que la hora de cierre');
+    if (!existente) throw new NotFoundException('No encontrada');
+    if (dto.horaApertura >= dto.horaCierre) {
+      throw new BadRequestException('Hora de apertura debe ser menor que la de cierre');
     }
-    return this.bibliotecaRepo.save({ ...existente, ...biblioteca });
+    return this.bibliotecaRepo.save({ ...existente, ...dto });
   }
 
   async delete(id: number): Promise<void> {

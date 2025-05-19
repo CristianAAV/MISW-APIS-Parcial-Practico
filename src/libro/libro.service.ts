@@ -2,7 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Libro } from './libro.entity';
-
+import { CreateLibroDto } from './dto/create-libro.dto';
+import { UpdateLibroDto } from './dto/update-libro.dto';
 @Injectable()
 export class LibroService {
   constructor(
@@ -20,20 +21,20 @@ export class LibroService {
     return libro;
   }
 
-  async create(libro: Libro): Promise<Libro> {
-    if (new Date(libro.fechaPublicacion) > new Date()) {
-      throw new BadRequestException('La fecha de publicación no puede ser futura');
+  async create(dto: CreateLibroDto) {
+    if (new Date(dto.fechaPublicacion) > new Date()) {
+      throw new BadRequestException('Fecha de publicación no puede ser futura');
     }
-    return this.libroRepo.save(libro);
+    return this.libroRepo.save(dto);
   }
 
-  async update(id: number, libro: Libro): Promise<Libro> {
+  async update(id: number, dto: UpdateLibroDto) {
     const existente = await this.libroRepo.findOneBy({ id });
-    if (!existente) throw new NotFoundException(`Libro con id ${id} no encontrado`);
-    if (new Date(libro.fechaPublicacion) > new Date()) {
-      throw new BadRequestException('La fecha de publicación no puede ser futura');
+    if (!existente) throw new NotFoundException('No encontrado');
+    if (new Date(dto.fechaPublicacion) > new Date()) {
+      throw new BadRequestException('Fecha de publicación no puede ser futura');
     }
-    return this.libroRepo.save({ ...existente, ...libro });
+    return this.libroRepo.save({ ...existente, ...dto });
   }
 
   async delete(id: number): Promise<void> {

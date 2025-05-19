@@ -1,4 +1,4 @@
-import { Controller, Param, Post, Get, Delete, Put, Body } from '@nestjs/common';
+import { Controller, Param, Post, Get, Delete, Put, Body, HttpCode } from '@nestjs/common';
 import { BibliotecaLibroService } from './biblioteca-libro.service';
 
 @Controller('libraries/:libraryId/books')
@@ -35,6 +35,7 @@ export class BibliotecaLibroController {
   }
 
   @Delete(':bookId')
+  @HttpCode(204) 
   deleteBookFromLibrary(
     @Param('libraryId') libraryId: number,
     @Param('bookId') bookId: number,
