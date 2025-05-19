@@ -1,8 +1,8 @@
 {
-  "name": "parcial",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "parcial - Gestion de Bibliotecas",
+  "version": "1.0.0",
+  "description": "Api REST para la gestion de bibliotecas",
+  "author": "Cristian Arias",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
