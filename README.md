@@ -41,6 +41,9 @@ psql -U postgres
 
 ```
 
+```bash
+CREATE DATABASE biblioteca_db;
+```
 
 ## Compile and run the project
 
