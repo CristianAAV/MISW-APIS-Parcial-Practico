@@ -34,17 +34,34 @@ Esta aplicación tiene el propósito de crear un sistema de gestión de bibliote
 $ npm install
 ```
 
-## Creacion de la tabla base de datos: 
+## Creacion de la base de datos: 
 Reemplaza postgres por el usuario de tu base de datos, posterior a la ejecucion del comando ingresa tu contraseña de la base de datos.
 ```bash
 psql -U postgres
 
 ```
 
-```bash
+```SQL
 CREATE DATABASE biblioteca_db;
 ```
 
+## Creacion de las tablas base de datos: 
+
+Dentro del archivo app.module.ts asegurate de tener las credenciales de tu base de datos correctas: 
+
+
+```typescript
+TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'postgres',
+      database: 'biblioteca_db',
+      autoLoadEntities: true,
+      synchronize: true,
+    }),
+```
 ## Compile and run the project
 
 ```bash
